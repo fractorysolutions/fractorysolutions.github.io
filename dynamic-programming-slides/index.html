@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAUVBMVEUHAQH3QDj5QDjzQDjWNzD3QDjzPjf4QDj5QDj5QDj2QDj5QDj1QDjmOzT3QDjcOTL5QDj5QDj5QDjzPjj1QDj5QDj3QDj5QDj3QDj5QDj5QDgrmthjAAAAGnRSTlMCYKoaBXwXmbHXNJ8jCEcG+NzvGiy6dcOFr38YuLwAAADkSURBVDjLhdPbEoIgEIBhFRQROWjaYd//QUMWEEqEm5r5v4FcrGnqa9IVwLqKYFARDCrCgntxAOhoBdztgcDv0S9CFgC87ffNfrYFwIcA6BUwrtsjeOEI34s/8q4f4LZbgH0uAuz9GO+/F6zfYpeKuA4ebC987D3uKLF7oFY/N1in5BjbETxiB7MOWUfQQbJY1h0YTNKNkWl3QEG28H1uIQLd5gAvlvBzhx+gmlQcYMpBGAWKA9Al7Tw+phMOtBcnBIGT/JxdaJoJBFLEMeXvOeHhNtVup7WOf/9p8jwveJ6l9v0LHzIfhdP/PcEAAAAASUVORK5CYII=" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solving Optimization Problems with Dynamic Programming</title>
+    <script type="module" crossorigin src="/dynamic-programming-slides/assets/index.f71df34e.js"></script>
+    <link rel="stylesheet" href="/dynamic-programming-slides/assets/index.0923919c.css">
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <h1>Solving Optimization Problems with Dynamic Programming</h1>
+          <div>Rao Zvorovski</div>
+          <div>
+            <img src="fractory.svg" alt="Fractory" />
+          </div>
+        </section>
+
+        <section data-auto-animate>
+          <h2>A Motivating Problem</h2>
+        </section>
+
+        <section data-auto-animate>
+          <h2>A Motivating Problem</h2>
+
+          <p>
+            You have to mill several surfaces.
+          </p>
+          <p>
+            Each surface has a minimal and maximal drill bit size.
+          </p>
+          <p>
+            What is the smallest set of drill bits that can be used to mill all the surfaces?
+          </p>
+        </section>
+        <section data-auto-animate>
+          <h2>Introduction to Dynamic Programming</h2>
+        </section>
+        <section data-auto-animate>
+          <h2>Introduction to Dynamic Programming</h2>
+          <p class="fragment fade-out">Essentially a clever caching technique</p>
+          <h3 class="fragment fade-in">Classic example: Fibonacci</h3>
+          <div class="fragment fade-in">
+            <pre class="typescript">
+              <code data-trim data-noescape>
+                function fib(n: number): number {
+                  if(n == 0) {
+                    return 0;
+                  }
+                  if(n == 1) {
+                    return 0;
+                  }
+                  return fib(n-1) + fib(n-2);
+                }
+              </code>
+            </pre>
+          </div>
+        </section>
+        <section data-auto-animate>
+          <h3>Classic example: Fibonacci</h3>
+          <div>
+            <pre class="typescript">
+              <code data-trim data-noescape>
+                function fib(n: number): number {
+                  if(n == 0) {
+                    return 0;
+                  }
+                  if(n == 1) {
+                    return 0;
+                  }
+                  return fib(n-1) + fib(n-2);
+                }
+              </code>
+            </pre>
+            <p>We can memoize this!</p>
+          </div>
+        </section>
+        <section data-auto-animate>
+          <h3>Classic example: Fibonacci</h3>
+          <div >
+            <pre class="typescript">
+              <code data-trim data-noescape>
+                const fibs: Record&lt;number, number&gt; = {
+                  0: 0,
+                  1: 1,
+                };
+                function fib(n: number): number {
+                  if(!fibs.includes(n)) {
+                    fibs[n] = fib(n-1) + fib(n-2);
+                  }
+                  return fibs[n];
+                }
+              </code>
+            </pre>
+          </div>
+          <p class="fragment fade-in">But we can convert this to be iterative</p>
+        </section>
+        <section data-auto-animate>
+          <h3>Classic example: Fibonacci</h3>
+          <div >
+            <pre class="typescript">
+              <code data-trim data-noescape>
+                function fib(n: number): number {
+                  const fibs = [0, 1];
+                  for(let i = 0; i &lte; n; ++i) {
+                    fibs[i] = fibs[i-1] + fibs[i-2];
+                  }
+                  return fibs[n];
+                }
+              </code>
+            </pre>
+          </div>
+          <p class="fragment fade-in">And we note we don't need all the old cases</p>
+        </section>
+        <section data-auto-animate>
+          <h3>Classic example: Fibonacci</h3>
+          <div >
+            <pre class="typescript">
+              <code data-trim data-noescape>
+                function fib(n: number): number {
+                  const fibs = [0, 1];
+                  for(let i = 0; i &lte; n; ++i) {
+                    fibs[i % 2] = fibs[(i-1)%2] + fibs[(i-2)%2];
+                  }
+                  return fibs[n%2];
+                }
+              </code>
+            </pre>
+          </div>
+          <p class="fragment fade-in">Plus some low-level optimization</p>
+        </section>
+        <section data-auto-animate>
+          <h3>Classic example: Fibonacci</h3>
+          <div >
+            <pre class="typescript">
+              <code data-trim data-noescape>
+                function fib(n: number): number {
+                  const fibs = [0, 1];
+                  for(let i = 0; i &lte; n; ++i) {
+                    fibs[i&1] = fibs[(i-1)&1] + fibs[i&1];
+                  }
+                  return fibs[n&1];
+                }
+              </code>
+            </pre>
+          </div>
+          <p class="fragment fade-in">Plus some low-level optimization</p>
+        </section>
+        <section>
+          <h2>Prerequisites</h2>
+          <p>
+            Optimal substructure
+          </p>
+          <p>
+            Overlapping sub-problems
+          </p>
+        </section>
+        <section>
+          <h2>Classic algorithm: Djikstra</h2>
+          <pre class="python">
+            <code data-trim data-noescape>
+def Dijkstra(Graph, source):
+
+  for each vertex v in Graph.Vertices:            
+    dist[v] ← INFINITY                 
+    prev[v] ← UNDEFINED                
+    add v to Q                     
+  dist[source] ← 0                       
+
+  while Q is not empty:
+    u ← vertex in Q with min dist[u]   
+    remove u from Q
+                                
+    for each neighbor v of u still in Q:
+      alt ← dist[u] + Graph.Edges(u, v)
+      if alt &lt; dist[v]:              
+          dist[v] ← alt
+          prev[v] ← u
+
+  return dist[], prev[]
+            </code>
+          </pre>
+          <small><cite>Source: Wikipedia</cite></small>
+        </section>
+        <section data-auto-animate>
+          <h2>Classic problem: 0-1 Knapsack</h2>
+        </section>
+        <section data-auto-animate>
+          <h2>Classic problem: 0-1 Knapsack</h2>
+          <p>
+            We have items, each has a weight and a value
+          </p>
+          <p>
+            With some carrying capacity, optimize choice of items for maximum value
+          </p>
+        </section>
+        <section data-auto-animate>
+          <h2>Classic problem: Giving change</h2>
+        </section>
+        <section data-auto-animate>
+          <h2>Classic problem: Giving change</h2>
+          <p>
+            We have infinite supply of given-valued coins.
+          </p>
+          <p>
+            How to give exact change with the fewest coins?
+          </p>
+          <p class="fragment fade-in">
+            Greedy works in certain cases!
+          </p>
+        </section>
+        <section data-auto-animate>
+          <h2>Real-life problem: Drill bits</h2>
+        </section>
+        <section data-auto-animate>
+          <h2>Real-life problem: Drill bits</h2>
+          <p>
+            You have to mill several surfaces.
+          </p>
+          <p>
+            Each surface has a minimal and maximal drill bit size.
+          </p>
+          <p>
+            What is the smallest set of drill bits that can be used to mill all the surfaces?
+          </p>
+        </section>
+        <section data-auto-animate>
+          <h2>Real-life problem: Drill bits</h2>
+          <p>
+            Finding a minimal solutions.
+          </p>
+          <p class="fragment fade-in">
+            Finding the best minimal solution by some measure.
+          </p>
+        </section>
+        <section data-auto-animate>
+          <h2>Real-life problem: Drill bits</h2>
+          <pre class="python">
+            <code data-trim data-noescape>
+def group_mills(mill_sizes: List[float]) -&gt; List[float]:
+    mill_sizes.sort()
+    ABSOLUTE_DIFFERENCE_COST = 0.01
+    RELATIVE_DIFFERENCE_COST = 0.01
+    MILL_CHANGE_COST = 1
+
+    def milling_cost(optimal, actual):
+        return (
+            RELATIVE_DIFFERENCE_COST
+            * (actual / optimal - MILL_RELATIVE_TOLERANCE)
+            / (1 - MILL_RELATIVE_TOLERANCE)
+        ) + (ABSOLUTE_DIFFERENCE_COST * (optimal - actual))
+
+    def can_mill(optimal, actual):
+        return optimal &gt;= actual and (
+            actual / optimal &gt;= MILL_RELATIVE_TOLERANCE
+            or optimal - actual &lt;= MILL_ABSOLUTE_TOLERANCE
+        )
+
+    def preferability(mill_size):
+        return 0.05 if floor(mill_size) == mill_size else 0
+
+    # Dynamic programming algorithm for selecting the optimal collection of mills
+    # first dimension: the actual mill to use
+    # second dimension: the desired mill
+    # value: number of replacements to mill things up to and including the desired mill, such that the current mill is the first dimension
+
+    inf = float("inf")
+    dp = [[inf for _ in mill_sizes] for _ in mill_sizes]
+    # forward pass
+    for i in range(len(dp)):
+        for j in range(len(dp)):
+            # if current mill isn't suitable for current desired mill, can't be done
+            if not can_mill(mill_sizes[j], mill_sizes[i]):
+                dp[i][j] = inf
+                continue
+
+            # the first actual mill: we switch from empty to it
+            if i == 0:
+                dp[i][j] = (
+                    MILL_CHANGE_COST if can_mill(mill_sizes[j], mill_sizes[0]) else inf
+                )
+                continue
+
+            # we could have used either the current mill for previous hole, or we could have changed to the current mill from any smaller mill
+            candidates = [
+                dp[i][j - 1],
+                *(
+                    dp[k][j - 1] + MILL_CHANGE_COST
+                    for k in range(i)
+                    if dp[k][j - 1] is not inf
+                ),
+            ]
+
+            # add a cost to try to use values as close as possible to the original
+            dp[i][j] = (
+                min(candidates, default=inf)
+                + milling_cost(mill_sizes[j], mill_sizes[i])
+                - preferability(mill_sizes[i])
+            )
+
+    # backtrack
+    i = len(dp)
+    j = len(dp) - 1
+    chosen_mills = set()
+    while j &gt;= 0:
+        best_mill = None
+        best_value = inf
+
+        # avoid out of bounds
+        if i != len(dp):
+            # current mill could have been used without changing
+            best_value = dp[i][j]
+            best_mill = i
+
+        for k in range(i):
+            # check if changing to current mill is cheaper, but it costs to exchange
+            if dp[k][j] + MILL_CHANGE_COST &lt;= best_value:
+                best_value = dp[k][j] + MILL_CHANGE_COST
+                best_mill = k
+
+        # found the best, use it
+        chosen_mills.add(mill_sizes[best_mill])
+        j -= 1
+        i = best_mill
+
+    return sorted([*chosen_mills])
+
+            </code>
+          </pre>
+        </section>
+        <section data-auto-animate>
+          <h1>Thank you!</h1>
+          <h2>Please ask any questions.</h2>
+        </section>
+      </div>
+    </div>
+    
+  </body>
+</html>
